@@ -1,0 +1,10 @@
+__pycache__/
+.ipynb_checkpoints/
+exp_local
+rlkit/
+hydra_test.*
+vae.*
+test.*
+*.jpg
+config/paths/config_path.yaml
+figures/

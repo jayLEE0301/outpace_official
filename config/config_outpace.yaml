@@ -1,0 +1,244 @@
+defaults:
+  - paths: config_path
+  - override hydra/launcher: joblib
+
+
+# env
+env: ???
+action_repeat: 1
+seed: 1
+# eval
+eval_frequency: 10000
+train_episode_video_freq : 100
+num_eval_episodes: 10
+# misc
+log_frequency_step: 10000
+log_save_tb: true
+save_video: true
+save_model: false
+save_buffer: false
+save_pixels: false
+save_frequency: 500000
+buffer_save_frequency : ${save_frequency}
+device: "cuda"
+
+reset_at_goal : false
+logging_frequency : 1000
+goal_env : true
+
+
+aim_n_sampled_goal : 4 
+done_on_success : true
+consider_done_true_in_critic : true
+
+
+
+normalize_nml_obs : false
+normalize_f_obs : true
+normalize_rl_obs : true 
+
+num_train_steps: 3000000
+num_random_steps: ??? 
+num_seed_steps : ??? 
+replay_buffer_capacity: 3000000
+aim_disc_replay_buffer_capacity : 50000 
+randomwalk_buffer_capacity : ${aim_disc_replay_buffer_capacity}
+max_episode_timesteps : ??? 
+use_aim : true
+
+
+aim_num_precollect_init_state : 100
+
+curriculum_buffer : default # aim
+
+
+
+use_residual_randomwalk : true 
+use_uncertainty_for_randomwalk : 'nml' #'nml' 'f' 'none'
+randomwalk_num_candidate : 10 
+randomwalk_random_noise : ??? 
+randomwalk_method : 'randgoal' #'rand_action'
+
+
+use_meta_nml : true 
+use_hgg : true
+use_aim_disc_ensemble : true 
+adam_eps : 1e-8 
+optim : adam
+
+rl_reward_type: aim #aim or sparse
+hgg_cost_type: meta_nml_aim_f # meta_nml, aim_f
+
+
+hgg_kwargs:
+  hgg_sampler_update_frequency : 20 # unit : episode
+  trajectory_pool_kwargs:
+    pool_length: 100 # number of trajectories in pool
+  match_sampler_kwargs:
+    num_episodes : ${hgg_kwargs.hgg_sampler_update_frequency} 
+    add_noise_to_goal : true 
+    cost_type : ${hgg_cost_type}
+    max_episode_timesteps : ${max_episode_timesteps}
+    split_type_for_meta_nml : last
+    split_ratio_for_meta_nml : 0.5 # ratio compared to max timesteps
+    normalize_aim_output : true 
+    gamma : ${agent.discount} 
+    hgg_c : 3.0 
+    hgg_L : 50 
+    device : ${device}
+    hgg_gcc_path : ${paths.default_hgg_gcc_path}
+    
+
+
+meta_nml_kwargs:
+  equal_pos_neg_test: true
+  meta_nml_negatives_only: false
+  meta_nml_train_every_k : 3000 # unit : step
+  meta_nml_train_on_positives : True
+  meta_nml_use_preprocessor : False
+  meta_nml_custom_embedding_key : None
+  meta_task_batch_size : 1
+  meta_nml_shuffle_states : False  
+  num_initial_meta_epochs : 3 # 10
+  num_meta_epochs : 1
+  nml_grad_steps : 1 # k-shot adaptation
+  test_strategy : sample
+  accumulation_steps : 16  
+  meta_train_sample_size : 512 
+  meta_test_sample_size : 2048
+  meta_test_batch_size : 2048
+  mixup_alpha : 0    
+  meta_nml_temperature : 0.1 # for weighted sampling
+  
+
+meta_nml :        
+  _target_: maml.meta_nml.MetaNML
+  hidden_sizes : [2048,2048]
+  input_dim : ??? # 2
+  points_per_task : 64
+  equal_pos_neg_test: ??? #equal_pos_neg_test and not meta_nml_negatives_only, 
+  dist_weight_thresh: 1 
+  query_point_weight: 1 
+  do_metalearning: true
+  train_vae: false
+  num_finetuning_layers: None
+  device : ${device}
+  num_workers : 1 
+
+
+
+inv_weight_curriculum_kwargs:
+  inv_weight_curriculum_temperature : 1 
+  inv_weight_curriculum_type : softmin # topk  
+  inv_weight_curriculum_logit_type : disc # disc, reward    
+  curriculum_buffer: ${curriculum_buffer}
+  use_Vf_to_inv_curriculum : 'softmax' # add
+  inv_weight_curriculum_aim_topk : 0.1
+
+
+aim_discriminator_cfg:  
+  _target_: outpacesac.DiscriminatorEnsemble
+  n_ensemble : 5
+  x_dim : ??? # goal dim*2
+  reward_type : aim
+  lr : 1e-4 
+  lipschitz_constant: 0.1 
+  output_activation : None 
+  device: ${device}
+  env_name : ${env}
+  tanh_constant : 1
+  lambda_coef : 25 
+  adam_eps : ${adam_eps}
+  optim : ${optim}
+
+aim_kwargs:
+  aim_disc_update_frequency: 1000 
+  aim_discriminator_steps : 10 
+  aim_rew_std : 1.0
+  aim_rew_mean : 0.0
+  aim_reward_normalize : true
+  aim_reward_norm_offset : 0.1
+  aim_input_type : default 
+
+
+agent:
+  _target_: outpacesac.OUTPACEAgent  
+  obs_shape: ??? # to be specified later
+  action_shape: ??? # to be specified later
+  action_range: ??? # to be specified later
+  device: ${device}
+  encoder_cfg: ${encoder}
+  encoder_target_cfg: ${encoder}
+  critic_cfg: ${critic}
+  critic_target_cfg: ${critic}
+  goal_dim : ???
+  actor_cfg: ${actor}  
+  discount: 0.99
+  init_temperature: 0.3 
+  lr: 1e-4
+  adam_eps : ${adam_eps}
+  optim : ${optim}
+  actor_update_frequency: 2
+  critic_target_tau: 0.01 
+  critic_target_update_frequency: 2 
+  encoder_target_tau: 0.05
+  encoder_update_frequency: 2
+  batch_size: 512
+  num_seed_steps: ${num_seed_steps}
+  env_name : ${env}
+  consider_done_true_in_critic : ${consider_done_true_in_critic}
+  use_aim : ${use_aim}
+  aim_discriminator_cfg : ${aim_discriminator_cfg}
+  aim_kwargs : ${aim_kwargs}  
+  inv_weight_curriculum_kwargs : ${inv_weight_curriculum_kwargs}
+  use_meta_nml : ${use_meta_nml}
+  meta_nml_cfg : ${meta_nml}
+  meta_nml_kwargs : ${meta_nml_kwargs}
+  normalize_nml_obs : ${normalize_nml_obs}
+  normalize_f_obs : ${normalize_f_obs}
+  normalize_rl_obs : ${normalize_rl_obs}
+  randomwalk_method : ${randomwalk_method}
+  use_aim_disc_ensemble : ${use_aim_disc_ensemble}
+  rl_reward_type : ${rl_reward_type}
+
+  
+critic:
+  _target_: outpace_core.StateCritic  
+  feature_dim: ???
+  action_shape: ${agent.action_shape}
+  hidden_dim: 512
+  hidden_depth: 3
+
+
+
+actor:
+  _target_: outpace_core.StateActor  
+  feature_dim: ???
+  action_shape: ${agent.action_shape}
+  hidden_depth: 3
+  hidden_dim: 512
+  log_std_bounds: [-10, 2]
+
+encoder:
+  _target_: outpace_core.IdentityEncoder  
+  obs_shape: ${agent.obs_shape}
+  
+
+
+visualize_debug : false
+
+# hydra configuration
+experiment: bench
+save_path_prefix : ${paths.default_save_path_prefix}
+env_path : ${paths.default_env_path}
+
+
+hydra:
+  # name: ${env}
+  run: # single process        
+    dir: ${save_path_prefix}/${env}/${now:%Y.%m.%d}/${now:%H%M%S}_test
+
+  sweep: # multi process
+    dir: ${save_path_prefix}/${env}/${now:%Y.%m.%d}/${now:%H%M%S}_test
+    subdir: ${seed} 
+  

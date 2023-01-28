@@ -1,0 +1,7 @@
+# NOTE : 
+# You should make config/paths/config_path.yaml as following format
+# The paths in this file should be different among the machines. 
+# It should not be uploaded in github remote.
+default_save_path_prefix : save_path
+default_env_path : project_path/envs/AntEnv/envs/antenv
+default_hgg_gcc_path : project_path/hgg
