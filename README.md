@@ -4,7 +4,7 @@ This is a Pytorch implementation of **OUTPACE** from our paper: "Outcome-directe
 
 By [Daesol Cho*](https://daesolcho.github.io), [Seungjae Lee*](https://jaylee0301.github.io/) (*Equally contributed), and H. Jin Kim
 
-A link to our paper can be found on arXiv(will be updated soon), and our project website can be found on [here](https://sjlee.cc/outpace).
+A link to our paper can be found on [arXiv](https://arxiv.org/abs/2301.11741), and our project website can be found on [here](https://sjlee.cc/outpace).
 
 <img width="100%" src="https://user-images.githubusercontent.com/30570922/215093920-a38380c2-d504-4dc5-9dd1-8b099cf51dfe.jpg"/>
 
