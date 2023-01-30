@@ -2,7 +2,7 @@
 
 This is a Pytorch implementation of **OUTPACE** from our paper: "Outcome-directed Reinforcement Learning by Uncertainty & Temporal Distance-Aware Curriculum Goal Generation" (ICLR 2023 Spotlight)
 
-By [Daesol Cho*](https://daesolcho.github.io), [Seungjae Lee*](https://jaylee0301.github.io/) (*Equally contributed), and H. Jin Kim
+By [Daesol Cho*](https://dscho1234.github.io), [Seungjae Lee*](https://jaylee0301.github.io/) (*Equally contributed), and H. Jin Kim
 
 A link to our paper can be found on [arXiv](https://arxiv.org/abs/2301.11741), and our project website can be found on [here](https://sjlee.cc/outpace).
 
